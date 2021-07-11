@@ -10,7 +10,10 @@ fn main() {
 
   let constant_index = chunk.write_constant(1.0, 1);
   chunk.write(OpCode::Constant(constant_index), 1);
+
+  chunk.write(OpCode::Negate, 1);
+
   chunk.write(OpCode::Return, 1);
 
-  disassembler::disassemble_chunk(&chunk);
+  dbg!(vm::interpret(chunk));
 }

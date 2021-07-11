@@ -9,6 +9,7 @@ struct Vm {
   stack: VecDeque<Value>,
 }
 
+#[derive(Debug)]
 pub enum InterpretResult {
   Ok,
   CompileError,
@@ -38,6 +39,10 @@ impl Vm {
         OpCode::Constant(constant_index) => {
           let constant = self.chunk.constants[*constant_index];
           self.stack.push_back(constant);
+        }
+        OpCode::Negate => {
+          let value = self.stack.pop_back().unwrap();
+          self.stack.push_back(-value)
         }
       }
     }

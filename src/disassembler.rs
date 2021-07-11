@@ -29,6 +29,7 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
       constant_instruction(OpCode::Constant(index), &chunk.constants[index], offset)
     }
     OpCode::Return => simple_instruction(OpCode::Return, offset),
+    OpCode::Negate => simple_instruction(OpCode::Negate, offset),
   }
 }
 
