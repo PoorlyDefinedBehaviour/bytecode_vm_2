@@ -15,7 +15,7 @@ pub fn disassemble_chunk(chunk: &Chunk) {
   }
 }
 
-pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
+fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
   print!("{offset:>0width$} ", offset = offset, width = 4);
 
   if offset > 0 && chunk.lines[offset] == chunk.lines[offset - 1] {
