@@ -5,6 +5,10 @@ pub enum OpCode {
   Constant(usize),
   Negate,
   Return,
+  Add,
+  Subtract,
+  Multiply,
+  Divide,
 }
 
 #[derive(Debug, PartialEq)]

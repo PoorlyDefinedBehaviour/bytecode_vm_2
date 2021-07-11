@@ -11,7 +11,11 @@ fn main() {
   let constant_index = chunk.write_constant(1.0, 1);
   chunk.write(OpCode::Constant(constant_index), 1);
 
-  chunk.write(OpCode::Negate, 1);
+  let constant_index = chunk.write_constant(2.0, 3);
+
+  chunk.write(OpCode::Constant(constant_index), 3);
+
+  chunk.write(OpCode::Add, 2);
 
   chunk.write(OpCode::Return, 1);
 

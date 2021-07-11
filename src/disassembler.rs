@@ -30,6 +30,10 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     }
     OpCode::Return => simple_instruction(OpCode::Return, offset),
     OpCode::Negate => simple_instruction(OpCode::Negate, offset),
+    OpCode::Add => simple_instruction(OpCode::Add, offset),
+    OpCode::Subtract => simple_instruction(OpCode::Subtract, offset),
+    OpCode::Multiply => simple_instruction(OpCode::Multiply, offset),
+    OpCode::Divide => simple_instruction(OpCode::Divide, offset),
   }
 }
 

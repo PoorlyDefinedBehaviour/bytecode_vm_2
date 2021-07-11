@@ -44,6 +44,30 @@ impl Vm {
           let value = self.stack.pop_back().unwrap();
           self.stack.push_back(-value)
         }
+        OpCode::Add => {
+          let b = self.stack.pop_back().unwrap();
+          let a = self.stack.pop_back().unwrap();
+
+          self.stack.push_back(a + b);
+        }
+        OpCode::Subtract => {
+          let b = self.stack.pop_back().unwrap();
+          let a = self.stack.pop_back().unwrap();
+
+          self.stack.push_back(a - b);
+        }
+        OpCode::Multiply => {
+          let b = self.stack.pop_back().unwrap();
+          let a = self.stack.pop_back().unwrap();
+
+          self.stack.push_back(a * b);
+        }
+        OpCode::Divide => {
+          let b = self.stack.pop_back().unwrap();
+          let a = self.stack.pop_back().unwrap();
+
+          self.stack.push_back(a / b);
+        }
       }
     }
   }
