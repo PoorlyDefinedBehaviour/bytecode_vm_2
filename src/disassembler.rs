@@ -1,4 +1,4 @@
-/// An assembler is an old-school program that akes a file
+/// An assembler is an old-school program that takes a file
 /// containing human-readable mnemonic names for CPU
 /// instructions like ADD and MULT and translates them to their
 /// binary machine code equivalent.

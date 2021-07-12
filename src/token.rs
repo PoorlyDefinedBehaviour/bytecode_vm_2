@@ -1,4 +1,10 @@
 #[derive(Debug, PartialEq)]
+pub struct SourceLocation {
+  pub line: usize,
+  pub column: usize,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
   LeftParen,
   RightParen,

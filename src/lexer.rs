@@ -35,7 +35,7 @@ impl Lexer {
     lexer
   }
 
-  pub fn lex(&mut self) -> Result<Vec<Token>, Vec<LexerError>> {
+  pub fn lex(&mut self) -> Result<Vec<(Token, SourceLocation)>, Vec<LexerError>> {
     let mut tokens = Vec::new();
 
     while self.has_characters_to_lex() {
@@ -170,62 +170,74 @@ impl Lexer {
     character == expected_character
   }
 
-  fn next_token(&mut self) -> Token {
+  fn source_location(&self) -> SourceLocation {
+    // TODO: this is broken, column is always the position of
+    // the last character of the current lexeme
+    // but it should be position of the the first.
+    SourceLocation {
+      line: self.line,
+      column: self.column,
+    }
+  }
+
+  fn next_token(&mut self) -> (Token, SourceLocation) {
     self.skip_whitespace();
 
     let token = match self.character {
-      ';' => Token::Semicolon,
-      '(' => Token::LeftParen,
-      ')' => Token::RightParen,
-      ',' => Token::Comma,
-      '+' => Token::Plus,
-      '-' => Token::Minus,
-      '{' => Token::LeftBrace,
-      '}' => Token::RightBrace,
-      '[' => Token::LeftBracket,
-      ']' => Token::RightBracket,
-      '*' => Token::Star,
-      '/' => Token::Slash,
+      ';' => (Token::Semicolon, self.source_location()),
+      '(' => (Token::LeftParen, self.source_location()),
+      ')' => (Token::RightParen, self.source_location()),
+      ',' => (Token::Comma, self.source_location()),
+      '+' => (Token::Plus, self.source_location()),
+      '-' => (Token::Minus, self.source_location()),
+      '{' => (Token::LeftBrace, self.source_location()),
+      '}' => (Token::RightBrace, self.source_location()),
+      '[' => (Token::LeftBracket, self.source_location()),
+      ']' => (Token::RightBracket, self.source_location()),
+      '*' => (Token::Star, self.source_location()),
+      '/' => (Token::Slash, self.source_location()),
       '>' => {
         if self.next_character_is('=') {
           self.read_character();
-          Token::GreaterThanOrEqual
+          (Token::GreaterThanOrEqual, self.source_location())
         } else {
-          Token::GreaterThan
+          (Token::GreaterThan, self.source_location())
         }
       }
       '<' => {
         if self.next_character_is('=') {
           self.read_character();
-          Token::LessThanOrEqual
+          (Token::LessThanOrEqual, self.source_location())
         } else {
-          Token::LessThan
+          (Token::LessThan, self.source_location())
         }
       }
       '!' => {
         if self.next_character_is('=') {
           self.read_character();
-          Token::NotEqual
+          (Token::NotEqual, self.source_location())
         } else {
-          Token::Bang
+          (Token::Bang, self.source_location())
         }
       }
       '=' => {
         if self.next_character_is('=') {
           self.read_character();
-          Token::Equal
+          (Token::Equal, self.source_location())
         } else {
-          Token::Assign
+          (Token::Assign, self.source_location())
         }
       }
-      '\0' => Token::Eof,
-      '"' => return Token::String(self.read_string()),
+      '\0' => (Token::Eof, self.source_location()),
+      '"' => return (Token::String(self.read_string()), self.source_location()),
       character if character.is_alphabetic() => {
         let identifier = self.read_identifier();
-        return lookup_identifier(identifier);
+        return (lookup_identifier(identifier), self.source_location());
       }
-      character if character.is_digit(10) => return Token::Number(self.read_number()),
-      character => Token::Illegal(character),
+      character if character.is_digit(10) => {
+        return (Token::Number(self.read_number()), self.source_location())
+      }
+      character => (Token::Illegal(character), self.source_location()),
     };
 
     self.read_character();
@@ -309,7 +321,15 @@ let b = 20",
     for (input, expected_tokens) in test_cases {
       let mut lexer = Lexer::new(String::from(input));
 
-      assert_eq!(expected_tokens, lexer.lex().unwrap());
+      let tokens = lexer
+        .lex()
+        .unwrap()
+        .iter()
+        .map(|(token, _location)| token)
+        .cloned()
+        .collect::<Vec<Token>>();
+
+      assert_eq!(expected_tokens, tokens);
     }
   }
 
@@ -332,7 +352,15 @@ let b = 20",
     for (input, expected_tokens) in test_cases {
       let mut lexer = Lexer::new(String::from(input));
 
-      assert_eq!(expected_tokens, lexer.lex().unwrap());
+      let tokens = lexer
+        .lex()
+        .unwrap()
+        .iter()
+        .map(|(token, _location)| token)
+        .cloned()
+        .collect::<Vec<Token>>();
+
+      assert_eq!(expected_tokens, tokens);
     }
   }
 
@@ -360,7 +388,15 @@ let b = 20",
     for (input, expected_tokens) in test_cases {
       let mut lexer = Lexer::new(String::from(input));
 
-      assert_eq!(expected_tokens, lexer.lex().unwrap());
+      let tokens = lexer
+        .lex()
+        .unwrap()
+        .iter()
+        .map(|(token, _location)| token)
+        .cloned()
+        .collect::<Vec<Token>>();
+
+      assert_eq!(expected_tokens, tokens);
     }
   }
 
@@ -376,7 +412,15 @@ let b = 20",
     for (input, expected_tokens) in test_cases {
       let mut lexer = Lexer::new(String::from(input));
 
-      assert_eq!(expected_tokens, lexer.lex().unwrap());
+      let tokens = lexer
+        .lex()
+        .unwrap()
+        .iter()
+        .map(|(token, _location)| token)
+        .cloned()
+        .collect::<Vec<Token>>();
+
+      assert_eq!(expected_tokens, tokens);
     }
   }
 
@@ -402,7 +446,15 @@ let b = 20",
     for (input, expected_tokens) in test_cases {
       let mut lexer = Lexer::new(String::from(input));
 
-      assert_eq!(expected_tokens, lexer.lex().unwrap());
+      let tokens = lexer
+        .lex()
+        .unwrap()
+        .iter()
+        .map(|(token, _location)| token)
+        .cloned()
+        .collect::<Vec<Token>>();
+
+      assert_eq!(expected_tokens, tokens);
     }
   }
 
@@ -454,7 +506,15 @@ let b = 20",
     for (input, expected_tokens) in test_cases {
       let mut lexer = Lexer::new(String::from(input));
 
-      assert_eq!(expected_tokens, lexer.lex().unwrap());
+      let tokens = lexer
+        .lex()
+        .unwrap()
+        .iter()
+        .map(|(token, _location)| token)
+        .cloned()
+        .collect::<Vec<Token>>();
+
+      assert_eq!(expected_tokens, tokens);
     }
   }
 
@@ -502,7 +562,15 @@ let b = 20",
     for (input, expected_tokens) in test_cases {
       let mut lexer = Lexer::new(String::from(input));
 
-      assert_eq!(expected_tokens, lexer.lex().unwrap());
+      let tokens = lexer
+        .lex()
+        .unwrap()
+        .iter()
+        .map(|(token, _location)| token)
+        .cloned()
+        .collect::<Vec<Token>>();
+
+      assert_eq!(expected_tokens, tokens);
     }
   }
 
@@ -533,7 +601,15 @@ let b = 20",
     for (input, expected_tokens) in test_cases {
       let mut lexer = Lexer::new(String::from(input));
 
-      assert_eq!(expected_tokens, lexer.lex().unwrap());
+      let tokens = lexer
+        .lex()
+        .unwrap()
+        .iter()
+        .map(|(token, _location)| token)
+        .cloned()
+        .collect::<Vec<Token>>();
+
+      assert_eq!(expected_tokens, tokens);
     }
   }
 

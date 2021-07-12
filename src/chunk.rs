@@ -33,12 +33,14 @@ impl Chunk {
     self.lines.push(line);
   }
 
-  pub fn write_constant(&mut self, value: Value, line: usize) -> usize {
+  pub fn write_constant(&mut self, value: Value, line: usize) {
     self.constants.push(value);
 
     self.lines.push(line);
 
-    self.constants.len() - 1
+    let constant_index = self.constants.len() - 1;
+
+    self.code.push(OpCode::Constant(constant_index));
   }
 }
 
@@ -75,17 +77,14 @@ mod tests {
     assert_eq!(chunk.lines, vec![]);
     assert_eq!(chunk.constants, vec![]);
 
-    let constant_index = chunk.write_constant(3.0, 3);
-
-    assert_eq!(constant_index, 0);
+    chunk.write_constant(3.0, 3);
 
     assert_eq!(chunk.constants, vec![3.0]);
 
+    dbg!(&chunk);
     assert_eq!(chunk.lines, vec![3]);
 
-    let constant_index = chunk.write_constant(5.0, 4);
-
-    assert_eq!(constant_index, 1);
+    chunk.write_constant(5.0, 4);
 
     assert_eq!(chunk.constants, vec![3.0, 5.0]);
 
