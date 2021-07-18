@@ -11,7 +11,7 @@ struct Vm {
 
 #[derive(Debug)]
 pub enum InterpretResult {
-  Ok,
+  Ok(Option<Value>),
   CompileError,
   RuntimeError,
 }
@@ -26,50 +26,65 @@ impl Vm {
   }
 
   pub fn run(&mut self) -> InterpretResult {
-    loop {
+    while self.ip < self.chunk.code.len() {
       let instruction = &self.chunk.code[self.ip];
 
       self.ip += 1;
 
       match instruction {
         OpCode::Return => {
-          println!("{:?}", self.stack.pop_back());
-          return InterpretResult::Ok;
+          return InterpretResult::Ok(self.stack.pop_back());
         }
         OpCode::Constant(constant_index) => {
-          let constant = self.chunk.constants[*constant_index];
-          self.stack.push_back(constant);
+          let constant = &self.chunk.constants[*constant_index];
+          self.stack.push_back(constant.clone());
         }
-        OpCode::Negate => {
-          let value = self.stack.pop_back().unwrap();
-          self.stack.push_back(-value)
-        }
+        OpCode::Negate => match self.stack.pop_back().unwrap() {
+          Value::Number(number) => self.stack.push_back(Value::Number(-number)),
+          _ => panic!("Operand must be a number"),
+        },
         OpCode::Add => {
           let b = self.stack.pop_back().unwrap();
           let a = self.stack.pop_back().unwrap();
 
-          self.stack.push_back(a + b);
+          match (a, b) {
+            (Value::Number(a), Value::Number(b)) => self.stack.push_back(Value::Number(a + b)),
+            _ => panic!("Operands must be numbers"),
+          }
         }
         OpCode::Subtract => {
           let b = self.stack.pop_back().unwrap();
           let a = self.stack.pop_back().unwrap();
 
-          self.stack.push_back(a - b);
+          match (a, b) {
+            (Value::Number(a), Value::Number(b)) => self.stack.push_back(Value::Number(a - b)),
+            _ => panic!("Operands must be numbers"),
+          }
         }
         OpCode::Multiply => {
           let b = self.stack.pop_back().unwrap();
           let a = self.stack.pop_back().unwrap();
 
-          self.stack.push_back(a * b);
+          match (a, b) {
+            (Value::Number(a), Value::Number(b)) => self.stack.push_back(Value::Number(a * b)),
+            _ => panic!("Operands must be numbers"),
+          }
         }
         OpCode::Divide => {
           let b = self.stack.pop_back().unwrap();
           let a = self.stack.pop_back().unwrap();
 
-          self.stack.push_back(a / b);
+          match (a, b) {
+            (Value::Number(a), Value::Number(b)) => self.stack.push_back(Value::Number(a / b)),
+            _ => panic!("Operands must be numbers"),
+          }
         }
+        OpCode::Nil => self.stack.push_back(Value::Nil),
+        OpCode::Boolean(boolean) => self.stack.push_back(Value::Boolean(*boolean)),
       }
     }
+
+    return InterpretResult::Ok(self.stack.pop_back());
   }
 }
 

@@ -19,5 +19,10 @@ fn main() {
     io::stdin()
       .read_line(&mut buffer)
       .expect("unable to read input");
+
+    match lexer::lex(buffer) {
+      Err(errors) => println!("{:?}", errors),
+      Ok(tokens) => println!("{:?}", vm::interpret(compiler::compile(tokens))),
+    }
   }
 }
