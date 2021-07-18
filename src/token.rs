@@ -62,6 +62,7 @@ pub fn lookup_identifier(lexeme: String) -> Token {
     "if" => Token::If,
     "else" => Token::Else,
     "nil" => Token::Nil,
+    "print" => Token::Print,
     _ => Token::Identifier(lexeme),
   }
 }
