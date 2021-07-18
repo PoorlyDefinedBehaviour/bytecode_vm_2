@@ -3,6 +3,7 @@ use crate::value::Value;
 
 use std::collections::VecDeque;
 
+#[derive(Debug)]
 struct Vm {
   chunk: Chunk,
   ip: usize,
@@ -81,6 +82,9 @@ impl Vm {
         }
         OpCode::Nil => self.stack.push_back(Value::Nil),
         OpCode::Boolean(boolean) => self.stack.push_back(Value::Boolean(*boolean)),
+        OpCode::Print => {
+          println!("{:?}", self.stack.pop_back().unwrap());
+        }
       }
     }
 
