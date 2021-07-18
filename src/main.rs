@@ -22,7 +22,11 @@ fn main() {
 
     match lexer::lex(buffer) {
       Err(errors) => println!("{:?}", errors),
-      Ok(tokens) => println!("{:?}", vm::interpret(compiler::compile(tokens))),
+      Ok(tokens) => {
+        if let vm::InterpretResult::Ok(Some(result)) = vm::interpret(compiler::compile(tokens)) {
+          println!("{:?}", result);
+        }
+      }
     }
   }
 }
