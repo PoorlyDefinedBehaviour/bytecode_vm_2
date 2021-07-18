@@ -11,6 +11,7 @@ pub enum OpCode {
   Multiply,
   Divide,
   Nil,
+  Print,
 }
 
 #[derive(Debug, PartialEq)]
@@ -83,7 +84,6 @@ mod tests {
 
     assert_eq!(chunk.constants, vec![Value::Number(3.0)]);
 
-    dbg!(&chunk);
     assert_eq!(chunk.lines, vec![3]);
 
     chunk.write_constant(Value::Number(5.0), 4);
