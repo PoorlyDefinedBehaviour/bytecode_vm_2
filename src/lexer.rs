@@ -8,7 +8,7 @@ pub struct LexerError {
 }
 
 #[derive(Debug)]
-pub struct Lexer {
+struct Lexer {
   source_code: String,
   position: usize,
   next_position: usize,
@@ -244,6 +244,10 @@ impl Lexer {
 
     token
   }
+}
+
+pub fn lex(source_code: String) -> Result<Vec<(Token, SourceLocation)>, Vec<LexerError>> {
+  Lexer::new(source_code).lex()
 }
 
 #[cfg(test)]
