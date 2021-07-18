@@ -3,12 +3,14 @@ use crate::value::Value;
 #[derive(Debug, PartialEq)]
 pub enum OpCode {
   Constant(usize),
+  Boolean(bool),
   Negate,
   Return,
   Add,
   Subtract,
   Multiply,
   Divide,
+  Nil,
 }
 
 #[derive(Debug, PartialEq)]
@@ -77,16 +79,19 @@ mod tests {
     assert_eq!(chunk.lines, vec![]);
     assert_eq!(chunk.constants, vec![]);
 
-    chunk.write_constant(3.0, 3);
+    chunk.write_constant(Value::Number(3.0), 3);
 
-    assert_eq!(chunk.constants, vec![3.0]);
+    assert_eq!(chunk.constants, vec![Value::Number(3.0)]);
 
     dbg!(&chunk);
     assert_eq!(chunk.lines, vec![3]);
 
-    chunk.write_constant(5.0, 4);
+    chunk.write_constant(Value::Number(5.0), 4);
 
-    assert_eq!(chunk.constants, vec![3.0, 5.0]);
+    assert_eq!(
+      chunk.constants,
+      vec![Value::Number(3.0), Value::Number(5.0)]
+    );
 
     assert_eq!(chunk.lines, vec![3, 4]);
   }
