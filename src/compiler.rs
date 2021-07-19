@@ -88,9 +88,9 @@ impl Compiler {
   }
 
   fn consume(&mut self, expected_token: &Token) -> Option<(Token, SourceLocation)> {
-    let (token, location) = &self.tokens[self.position];
+    let (token, location) = self.tokens[self.position].clone();
 
-    if std::mem::discriminant(token) != std::mem::discriminant(expected_token) {
+    if std::mem::discriminant(&token) != std::mem::discriminant(expected_token) {
       self.error(format!(
         "expected {:?}, got {:?} at line {} and column {}",
         expected_token, token, location.line, location.column
@@ -99,16 +99,16 @@ impl Compiler {
       None
     } else {
       self.position += 1;
-      Some((token.clone(), location.clone()))
+      Some((token, location))
     }
   }
 
   fn consume_current_token(&mut self) -> (Token, SourceLocation) {
-    let (token, location) = &self.tokens[self.position];
+    let (token, location) = self.tokens[self.position].clone();
 
     self.position += 1;
 
-    (token.clone(), location.clone())
+    (token, location)
   }
 
   fn error(&mut self, message: String) {
@@ -180,7 +180,7 @@ impl Compiler {
   }
 
   fn number(&mut self) {
-    let (token, location) = &self.tokens[self.position];
+    let (token, location) = self.consume_current_token();
 
     match token {
       Token::Number(lexeme) => {
