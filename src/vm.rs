@@ -1,34 +1,35 @@
 use crate::chunk::{Chunk, OpCode};
 use crate::value::Value;
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug)]
-struct Vm {
-  chunk: Chunk,
+pub struct Vm {
   ip: usize,
   stack: VecDeque<Value>,
+  globals: HashMap<String, Value>,
 }
 
 #[derive(Debug)]
 pub enum InterpretResult {
   Ok(Option<Value>),
-  CompileError,
-  RuntimeError,
+  CompileError(String),
+  RuntimeError(String),
 }
 
 impl Vm {
-  pub fn new(chunk: Chunk) -> Self {
+  pub fn new() -> Self {
     Vm {
-      chunk,
       ip: 0,
       stack: VecDeque::new(),
+      globals: HashMap::new(),
     }
   }
 
-  pub fn run(&mut self) -> InterpretResult {
-    while self.ip < self.chunk.code.len() {
-      let instruction = &self.chunk.code[self.ip];
+  pub fn run(&mut self, chunk: Chunk) -> InterpretResult {
+    dbg!(&chunk);
+    while self.ip < chunk.code.len() {
+      let instruction = &chunk.code[self.ip];
 
       self.ip += 1;
 
@@ -37,7 +38,7 @@ impl Vm {
           return InterpretResult::Ok(self.stack.pop_back());
         }
         OpCode::Constant(constant_index) => {
-          let constant = &self.chunk.constants[*constant_index];
+          let constant = &chunk.constants[*constant_index];
           self.stack.push_back(constant.clone());
         }
         OpCode::Negate => match self.stack.pop_back().unwrap() {
@@ -85,15 +86,30 @@ impl Vm {
         OpCode::Print => {
           println!("{:?}", self.stack.pop_back().unwrap());
         }
+        OpCode::Pop => {
+          self.stack.pop_back();
+        }
+        OpCode::DefineGlobalVariable(global_index) => {
+          match chunk.constants[*global_index].clone() {
+            Value::Identifier(global_variable_name) => {
+              let global_variable_value = self.stack.back().cloned().unwrap();
+              self
+                .globals
+                .insert(global_variable_name, global_variable_value);
+              self.stack.pop_back();
+            }
+            value => panic!("expected global variable name, got {:?}", value),
+          }
+        }
+        OpCode::AccessGlobalVariable(variable_name) => match self.globals.get(variable_name) {
+          None => {
+            return InterpretResult::RuntimeError(format!("undefined variable {}", variable_name))
+          }
+          Some(value) => self.stack.push_back(value.clone()),
+        },
       }
     }
 
     return InterpretResult::Ok(self.stack.pop_back());
   }
-}
-
-pub fn interpret(chunk: Chunk) -> InterpretResult {
-  let mut vm = Vm::new(chunk);
-
-  vm.run()
 }

@@ -24,9 +24,9 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     print!("{} ", chunk.lines[offset]);
   }
 
-  match chunk.code[offset] {
+  match &chunk.code[offset] {
     OpCode::Constant(index) => {
-      constant_instruction(OpCode::Constant(index), &chunk.constants[index], offset)
+      indexed_instruction(OpCode::Constant(*index), &chunk.constants[*index], offset)
     }
     OpCode::Return => simple_instruction(OpCode::Return, offset),
     OpCode::Negate => simple_instruction(OpCode::Negate, offset),
@@ -35,13 +35,22 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     OpCode::Multiply => simple_instruction(OpCode::Multiply, offset),
     OpCode::Divide => simple_instruction(OpCode::Divide, offset),
     OpCode::Nil => simple_instruction(OpCode::Nil, offset),
-    OpCode::Boolean(boolean) => simple_instruction(OpCode::Boolean(boolean), offset),
+    OpCode::Boolean(boolean) => simple_instruction(OpCode::Boolean(*boolean), offset),
     OpCode::Print => simple_instruction(OpCode::Print, offset),
+    OpCode::Pop => simple_instruction(OpCode::Pop, offset),
+    OpCode::DefineGlobalVariable(index) => indexed_instruction(
+      OpCode::DefineGlobalVariable(*index),
+      &chunk.constants[*index],
+      offset,
+    ),
+    OpCode::AccessGlobalVariable(variable_name) => {
+      simple_instruction(OpCode::AccessGlobalVariable(variable_name.clone()), offset)
+    }
   }
 }
 
-fn constant_instruction(constant_opcode: OpCode, constant: &Value, offset: usize) -> usize {
-  println!("{:?} {:?}", constant_opcode, constant);
+fn indexed_instruction(opcode: OpCode, value: &Value, offset: usize) -> usize {
+  println!("{:?} {:?}", opcode, value);
 
   offset + 1
 }

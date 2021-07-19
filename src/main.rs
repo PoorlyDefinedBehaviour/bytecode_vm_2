@@ -8,7 +8,13 @@ pub mod vm;
 
 use std::io::{self, Write};
 
+use compiler::Compiler;
+use vm::{InterpretResult, Vm};
+
 fn main() {
+  let mut compiler = Compiler::new();
+  let mut vm = Vm::new();
+
   loop {
     print!("> ");
 
@@ -23,7 +29,7 @@ fn main() {
     match lexer::lex(buffer) {
       Err(errors) => println!("{:?}", errors),
       Ok(tokens) => {
-        if let vm::InterpretResult::Ok(Some(result)) = vm::interpret(compiler::compile(tokens)) {
+        if let InterpretResult::Ok(Some(result)) = vm.run(compiler.compile(tokens)) {
           println!("{:?}", result);
         }
       }

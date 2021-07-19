@@ -41,7 +41,7 @@ fn token_precedence(token: &Token) -> Precedence {
 
 type Parselet = fn(&mut Compiler);
 
-struct Compiler {
+pub struct Compiler {
   tokens: Vec<(Token, SourceLocation)>,
   position: usize,
   is_in_error_state: bool,
@@ -62,9 +62,9 @@ macro_rules! parselets {
 }
 
 impl Compiler {
-  fn new(tokens: Vec<(Token, SourceLocation)>) -> Self {
+  pub fn new() -> Self {
     Compiler {
-      tokens,
+      tokens: Vec::new(),
       position: 0,
       is_in_error_state: false,
       chunk: Chunk::new(),
@@ -73,7 +73,8 @@ impl Compiler {
         &Token::False => Compiler::literal,
         &Token::Nil => Compiler::literal,
         // TODO: can we get the discriminant without instatiating the variant?
-        &Token::Number("any number".to_owned()) => Compiler::literal
+        &Token::Number("any number".to_owned()) => Compiler::literal,
+        &Token::Identifier("any identifier".to_owned()) => Compiler::variable
       },
       infix_parselets: parselets! {
         &Token::Plus => Compiler::binary
@@ -81,18 +82,25 @@ impl Compiler {
     }
   }
 
-  fn consume(&mut self, expected_token: &Token) {
+  fn reset(&mut self) {
+    self.position = 0;
+    self.is_in_error_state = false;
+  }
+
+  fn consume(&mut self, expected_token: &Token) -> Option<(Token, SourceLocation)> {
     let (token, location) = &self.tokens[self.position];
 
-    if token == expected_token {
-      self.position += 1;
-      return;
-    }
+    if std::mem::discriminant(token) != std::mem::discriminant(expected_token) {
+      self.error(format!(
+        "expected {:?}, got {:?} at line {} and column {}",
+        expected_token, token, location.line, location.column
+      ));
 
-    self.error(format!(
-      "expected {:?}, got {:?} at line {} and column {}",
-      expected_token, token, location.line, location.column
-    ));
+      None
+    } else {
+      self.position += 1;
+      Some((token.clone(), location.clone()))
+    }
   }
 
   fn consume_current_token(&mut self) -> (Token, SourceLocation) {
@@ -111,6 +119,29 @@ impl Compiler {
     self.is_in_error_state = true;
 
     println!("{}", message);
+  }
+
+  fn synchronize(&mut self) {
+    self.is_in_error_state = false;
+
+    loop {
+      match self.current_token() {
+        Token::Eof
+        | Token::Class
+        | Token::Function
+        | Token::Let
+        | Token::For
+        | Token::If
+        | Token::While
+        | Token::Print
+        | Token::Return => break,
+        _ => self.advance(),
+      }
+    }
+  }
+
+  fn advance(&mut self) {
+    self.position += 1;
   }
 
   fn current_token(&self) -> Token {
@@ -229,22 +260,58 @@ impl Compiler {
       .write(OpCode::Print, self.current_token_location().line)
   }
 
-  fn compile(&mut self) {
+  fn expression_statement(&mut self) {
+    self.expression();
+
+    self
+      .chunk
+      .write(OpCode::Pop, self.current_token_location().line);
+  }
+
+  fn variable(&mut self) {
+    let (token, location) = self.consume_current_token();
+
+    match token {
+      Token::Identifier(variable_name) => self
+        .chunk
+        .write(OpCode::AccessGlobalVariable(variable_name), location.line),
+      token => panic!("unexpected token {:?}", token),
+    }
+  }
+
+  fn let_declaration(&mut self) {
+    self.consume(&Token::Let);
+
+    if let Some((Token::Identifier(identifier), location)) =
+      self.consume(&Token::Identifier("any_identifier".to_owned()))
+    {
+      self.consume(&Token::Assign);
+
+      self.expression();
+
+      self
+        .chunk
+        .write_global(Value::Identifier(identifier), location.line)
+    }
+  }
+
+  pub fn compile(&mut self, tokens: Vec<(Token, SourceLocation)>) -> Chunk {
+    self.reset();
+
+    self.tokens = tokens;
+
     loop {
+      if self.is_in_error_state {
+        self.synchronize();
+      }
+
       match self.current_token() {
+        Token::Eof => return self.chunk.clone(),
         Token::Print => self.print_statement(),
-        Token::Eof => break,
+        Token::Let => self.let_declaration(),
         Token::Illegal(character) => panic!("illegal character {:?}", character),
-        _ => self.expression(),
+        _ => self.expression_statement(),
       }
     }
   }
-}
-
-pub fn compile(tokens: Vec<(Token, SourceLocation)>) -> Chunk {
-  let mut compiler = Compiler::new(tokens);
-
-  compiler.compile();
-
-  compiler.chunk
 }

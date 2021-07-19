@@ -1,9 +1,11 @@
 use crate::value::Value;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum OpCode {
   Constant(usize),
+  DefineGlobalVariable(usize),
   Boolean(bool),
+  AccessGlobalVariable(String),
   Negate,
   Return,
   Add,
@@ -12,9 +14,10 @@ pub enum OpCode {
   Divide,
   Nil,
   Print,
+  Pop,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Chunk {
   pub code: Vec<OpCode>,
   pub constants: Vec<Value>,
@@ -44,6 +47,16 @@ impl Chunk {
     let constant_index = self.constants.len() - 1;
 
     self.code.push(OpCode::Constant(constant_index));
+  }
+
+  pub fn write_global(&mut self, value: Value, line: usize) {
+    self.constants.push(value);
+
+    self.lines.push(line);
+
+    let global_index = self.constants.len() - 1;
+
+    self.code.push(OpCode::DefineGlobalVariable(global_index));
   }
 }
 
