@@ -89,23 +89,33 @@ impl Vm {
         OpCode::Pop => {
           self.stack.pop_back();
         }
-        OpCode::DefineGlobalVariable(global_index) => {
-          match chunk.constants[*global_index].clone() {
-            Value::Identifier(global_variable_name) => {
-              let global_variable_value = self.stack.back().cloned().unwrap();
-              self
-                .globals
-                .insert(global_variable_name, global_variable_value);
-              self.stack.pop_back();
+        OpCode::DefineGlobalVariable(index) => match &chunk.constants[*index] {
+          Value::Identifier(global_variable_name) => {
+            let global_variable_value = self.stack.back().cloned().unwrap();
+            self
+              .globals
+              .insert(global_variable_name.clone(), global_variable_value);
+            self.stack.pop_back();
+          }
+          value => panic!("expected global variable name, got {:?}", value),
+        },
+        OpCode::AccessGlobalVariable(index) => match &chunk.constants[*index] {
+          Value::Identifier(global_variable_name) => match self.globals.get(global_variable_name) {
+            None => {
+              return InterpretResult::RuntimeError(format!(
+                "undefined variable {}",
+                global_variable_name
+              ))
             }
-            value => panic!("expected global variable name, got {:?}", value),
+            Some(value) => self.stack.push_back(value.clone()),
+          },
+
+          value => {
+            return InterpretResult::RuntimeError(format!(
+              "expected global variable identifier, got {:?}",
+              value
+            ))
           }
-        }
-        OpCode::AccessGlobalVariable(variable_name) => match self.globals.get(variable_name) {
-          None => {
-            return InterpretResult::RuntimeError(format!("undefined variable {}", variable_name))
-          }
-          Some(value) => self.stack.push_back(value.clone()),
         },
       }
     }

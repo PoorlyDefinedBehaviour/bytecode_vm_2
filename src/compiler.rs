@@ -187,7 +187,7 @@ impl Compiler {
         let value = lexeme.parse::<f64>().unwrap();
         self
           .chunk
-          .write_constant(Value::Number(value), location.line);
+          .write_constant(OpCode::Constant, Value::Number(value), location.line);
       }
       token => panic!("expected number got {:?}", token),
     }
@@ -236,9 +236,11 @@ impl Compiler {
       Token::True => self.chunk.write(OpCode::Boolean(true), location.line),
       Token::Nil => self.chunk.write(OpCode::Nil, location.line),
       Token::Number(number) => match number.parse::<f64>() {
-        Ok(number) => self
-          .chunk
-          .write_constant(Value::Number(number), location.line),
+        Ok(number) => {
+          self
+            .chunk
+            .write_constant(OpCode::Constant, Value::Number(number), location.line)
+        }
         error => panic!("{:?}", error),
       },
       token => panic!("unexpected token {:?}", token),
@@ -272,9 +274,11 @@ impl Compiler {
     let (token, location) = self.consume_current_token();
 
     match token {
-      Token::Identifier(variable_name) => self
-        .chunk
-        .write(OpCode::AccessGlobalVariable(variable_name), location.line),
+      Token::Identifier(variable_name) => self.chunk.write_constant(
+        OpCode::AccessGlobalVariable,
+        Value::Identifier(variable_name),
+        location.line,
+      ),
       token => panic!("unexpected token {:?}", token),
     }
   }
@@ -289,9 +293,11 @@ impl Compiler {
 
       self.expression();
 
-      self
-        .chunk
-        .write_global(Value::Identifier(identifier), location.line)
+      self.chunk.write_constant(
+        OpCode::DefineGlobalVariable,
+        Value::Identifier(identifier),
+        location.line,
+      )
     }
   }
 

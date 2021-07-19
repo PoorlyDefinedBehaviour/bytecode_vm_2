@@ -5,7 +5,7 @@ pub enum OpCode {
   Constant(usize),
   DefineGlobalVariable(usize),
   Boolean(bool),
-  AccessGlobalVariable(String),
+  AccessGlobalVariable(usize),
   Negate,
   Return,
   Add,
@@ -39,24 +39,14 @@ impl Chunk {
     self.lines.push(line);
   }
 
-  pub fn write_constant(&mut self, value: Value, line: usize) {
+  pub fn write_constant(&mut self, opcode: fn(usize) -> OpCode, value: Value, line: usize) {
     self.constants.push(value);
 
     self.lines.push(line);
 
     let constant_index = self.constants.len() - 1;
 
-    self.code.push(OpCode::Constant(constant_index));
-  }
-
-  pub fn write_global(&mut self, value: Value, line: usize) {
-    self.constants.push(value);
-
-    self.lines.push(line);
-
-    let global_index = self.constants.len() - 1;
-
-    self.code.push(OpCode::DefineGlobalVariable(global_index));
+    self.code.push(opcode(constant_index));
   }
 }
 
@@ -93,13 +83,13 @@ mod tests {
     assert_eq!(chunk.lines, vec![]);
     assert_eq!(chunk.constants, vec![]);
 
-    chunk.write_constant(Value::Number(3.0), 3);
+    chunk.write_constant(OpCode::Constant, Value::Number(3.0), 3);
 
     assert_eq!(chunk.constants, vec![Value::Number(3.0)]);
 
     assert_eq!(chunk.lines, vec![3]);
 
-    chunk.write_constant(Value::Number(5.0), 4);
+    chunk.write_constant(OpCode::Constant, Value::Number(5.0), 4);
 
     assert_eq!(
       chunk.constants,
